@@ -8,12 +8,12 @@ import Mouse
 
 
 type alias Model =
-    Int
+    { earnings : Int, stockPrice : Int, availableOptions : Int, initialOfferingValue : Int }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( 0, Cmd.none )
+    ( { earnings = 0, stockPrice = 0, availableOptions = 5000, initialOfferingValue = 8 }, Cmd.none )
 
 
 
@@ -32,7 +32,7 @@ type Msg
 view : Model -> Html Msg
 view model =
     div []
-        [ text (toString model) ]
+        [ text (toString model.earnings) ]
 
 
 
@@ -43,7 +43,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         MouseMsg position ->
-            ( 5000 * (position.x) - 5000 * 8, Cmd.none )
+            ( { model | earnings = model.availableOptions * (position.x) - model.availableOptions * model.initialOfferingValue }, Cmd.none )
 
         NoOp ->
             ( model, Cmd.none )
