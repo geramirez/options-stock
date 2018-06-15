@@ -1,19 +1,32 @@
 module App exposing (..)
 
 import Html exposing (Html, div, text, program)
-import Mouse
+import Time exposing (Time, second)
+import Http
 
 
 -- MODEL
 
 
 type alias Model =
-    { earnings : Int, stockPrice : Int, availableOptions : Int, initialOfferingValue : Int }
+    { earnings : Float
+    , stockPrice : Float
+    , availableOptions : Float
+    , initialOfferingValue : Float
+    , tickerSymbol : String
+    }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { earnings = 0, stockPrice = 0, availableOptions = 5000, initialOfferingValue = 8 }, Cmd.none )
+    ( { earnings = 0.0
+      , stockPrice = 0.0
+      , availableOptions = 5000.0
+      , initialOfferingValue = 8.5
+      , tickerSymbol = "pvtl"
+      }
+    , Cmd.none
+    )
 
 
 
@@ -22,7 +35,8 @@ init =
 
 type Msg
     = NoOp
-    | MouseMsg Mouse.Position
+    | NewMessage (Result Http.Error String)
+    | Tick Time
 
 
 
@@ -32,7 +46,7 @@ type Msg
 view : Model -> Html Msg
 view model =
     div []
-        [ text (toString model.earnings) ]
+        [ text (toString (round model.earnings)) ]
 
 
 
@@ -42,11 +56,26 @@ view model =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        MouseMsg position ->
-            ( { model | earnings = model.availableOptions * (position.x) - model.availableOptions * model.initialOfferingValue }, Cmd.none )
+        NewMessage (Ok stringPrice) ->
+            ( { model | earnings = (calculateEarnings stringPrice model) }, Cmd.none )
+
+        NewMessage (Err _) ->
+            ( model, Cmd.none )
+
+        Tick newTime ->
+            ( { model | earnings = 0 }, getStockData model.tickerSymbol )
 
         NoOp ->
             ( model, Cmd.none )
+
+
+calculateEarnings : String -> Model -> Float
+calculateEarnings stringPrice model =
+    let
+        floatPrice =
+            (String.toFloat stringPrice |> Result.withDefault 0.0)
+    in
+        (model.availableOptions * floatPrice) - (model.availableOptions * model.initialOfferingValue)
 
 
 
@@ -55,7 +84,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Mouse.clicks MouseMsg
+    Time.every (second * 30) Tick
 
 
 
@@ -70,3 +99,15 @@ main =
         , update = update
         , subscriptions = subscriptions
         }
+
+
+getStockData : String -> Cmd Msg
+getStockData tickerSymbol =
+    let
+        url =
+            "https://api.iextrading.com/1.0/stock/" ++ tickerSymbol ++ "/price"
+
+        request =
+            Http.getString url
+    in
+        Http.send NewMessage request
