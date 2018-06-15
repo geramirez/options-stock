@@ -1,7 +1,7 @@
 module App exposing (..)
 
 import Html exposing (Html, div, text, program, h1, input, label)
-import Html.Attributes exposing (defaultValue)
+import Html.Attributes exposing (defaultValue, type_)
 import Html.Events exposing (onInput)
 import Time exposing (Time, second)
 import Http
@@ -11,20 +11,28 @@ import Http
 
 
 type alias Model =
-    { earnings : Float
-    , stockPrice : Float
+    { stockPrice : Float
     , availableOptions : Float
     , initialOfferingValue : Float
+    , taxRate : Float
     , tickerSymbol : String
+    }
+
+
+type alias EarningsData =
+    { totalEarning : String
+    , cost : String
+    , netGain : String
+    , taxRate : String
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { earnings = 0.0
-      , stockPrice = 0.0
+    ( { stockPrice = 0.0
       , availableOptions = 5000.0
       , initialOfferingValue = 8.5
+      , taxRate = 0
       , tickerSymbol = "pvtl"
       }
     , Cmd.none
@@ -38,6 +46,7 @@ init =
 type Inputs
     = InitialOfferingValue
     | AvailableOptions
+    | TaxRate
     | TickerSymbol
 
 
@@ -54,33 +63,55 @@ type Msg
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ h1 [] [ text (calculateEarnings model) ]
-        , label []
-            [ text "Initial Offering Value"
-            , input
-                [ onInput (InputChange InitialOfferingValue)
-                , defaultValue (toString model.initialOfferingValue)
+    let
+        earningsData =
+            calculateEarnings model
+    in
+        div []
+            [ h1 [] [ text ("Earnings: " ++ earningsData.netGain) ]
+            , div []
+                [ text ("Cost: " ++ earningsData.cost)
+                , text ("Total Earnings: " ++ earningsData.totalEarning)
+                , text ("Tax Rate: " ++ earningsData.taxRate)
+                , text ("Stock Price: " ++ (toString model.stockPrice))
+                , text ("Ticker: " ++ model.tickerSymbol)
                 ]
-                []
-            ]
-        , label []
-            [ text "Available Options"
-            , input
-                [ onInput (InputChange AvailableOptions)
-                , defaultValue (toString model.availableOptions)
+            , label []
+                [ text "Initial Offering Value"
+                , input
+                    [ onInput (InputChange InitialOfferingValue)
+                    , type_ "number"
+                    , defaultValue (toString model.initialOfferingValue)
+                    ]
+                    []
                 ]
-                []
-            ]
-        , label []
-            [ text "Ticker Symbol"
-            , input
-                [ onInput (InputChange TickerSymbol)
-                , defaultValue model.tickerSymbol
+            , label []
+                [ text "Available Options"
+                , input
+                    [ onInput (InputChange AvailableOptions)
+                    , type_ "number"
+                    , defaultValue (toString model.availableOptions)
+                    ]
+                    []
                 ]
-                []
+            , label []
+                [ text "Ticker Symbol"
+                , input
+                    [ onInput (InputChange TickerSymbol)
+                    , defaultValue model.tickerSymbol
+                    ]
+                    []
+                ]
+            , label []
+                [ text "Tax Rate"
+                , input
+                    [ onInput (InputChange TaxRate)
+                    , type_ "number"
+                    , defaultValue (toString model.taxRate)
+                    ]
+                    []
+                ]
             ]
-        ]
 
 
 
@@ -106,6 +137,9 @@ update msg model =
                 AvailableOptions ->
                     ( { model | availableOptions = (String.toFloat inputText |> Result.withDefault 0.0) }, Cmd.none )
 
+                TaxRate ->
+                    ( { model | taxRate = (String.toFloat inputText |> Result.withDefault 0.0) }, Cmd.none )
+
                 TickerSymbol ->
                     ( { model | tickerSymbol = inputText }, Cmd.none )
 
@@ -116,7 +150,7 @@ update msg model =
             ( model, Cmd.none )
 
 
-calculateEarnings : Model -> String
+calculateEarnings : Model -> EarningsData
 calculateEarnings model =
     let
         totalEarning =
@@ -125,12 +159,17 @@ calculateEarnings model =
         cost =
             (model.availableOptions * model.initialOfferingValue)
 
-        netGain =
+        netGainBeforeTax =
             totalEarning - cost
+
+        netGain =
+            netGainBeforeTax * (1 - model.taxRate)
     in
-        netGain
-            |> round
-            |> toString
+        { totalEarning = totalEarning |> toString
+        , cost = cost |> toString
+        , netGain = netGain |> toString
+        , taxRate = model.taxRate |> toString
+        }
 
 
 
