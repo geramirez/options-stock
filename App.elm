@@ -1,6 +1,8 @@
 module App exposing (..)
 
-import Html exposing (Html, div, text, program)
+import Html exposing (Html, div, text, program, h1, input, label)
+import Html.Attributes exposing (defaultValue)
+import Html.Events exposing (onInput)
 import Time exposing (Time, second)
 import Http
 
@@ -33,9 +35,16 @@ init =
 -- MESSAGES
 
 
+type Inputs
+    = InitialOfferingValue
+    | AvailableOptions
+    | TickerSymbol
+
+
 type Msg
     = NoOp
-    | NewMessage (Result Http.Error String)
+    | NewStockPrice (Result Http.Error String)
+    | InputChange Inputs String
     | Tick Time
 
 
@@ -46,7 +55,32 @@ type Msg
 view : Model -> Html Msg
 view model =
     div []
-        [ text (toString (round model.earnings)) ]
+        [ h1 [] [ text (calculateEarnings model) ]
+        , label []
+            [ text "Initial Offering Value"
+            , input
+                [ onInput (InputChange InitialOfferingValue)
+                , defaultValue (toString model.initialOfferingValue)
+                ]
+                []
+            ]
+        , label []
+            [ text "Available Options"
+            , input
+                [ onInput (InputChange AvailableOptions)
+                , defaultValue (toString model.availableOptions)
+                ]
+                []
+            ]
+        , label []
+            [ text "Ticker Symbol"
+            , input
+                [ onInput (InputChange TickerSymbol)
+                , defaultValue model.tickerSymbol
+                ]
+                []
+            ]
+        ]
 
 
 
@@ -56,26 +90,47 @@ view model =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NewMessage (Ok stringPrice) ->
-            ( { model | earnings = (calculateEarnings stringPrice model) }, Cmd.none )
+        NewStockPrice httpstatus ->
+            case httpstatus of
+                Ok stringPrice ->
+                    ( { model | stockPrice = (String.toFloat stringPrice |> Result.withDefault 0.0) }, Cmd.none )
 
-        NewMessage (Err _) ->
-            ( model, Cmd.none )
+                Err _ ->
+                    ( model, Cmd.none )
+
+        InputChange inputType inputText ->
+            case inputType of
+                InitialOfferingValue ->
+                    ( { model | initialOfferingValue = (String.toFloat inputText |> Result.withDefault 0.0) }, Cmd.none )
+
+                AvailableOptions ->
+                    ( { model | availableOptions = (String.toFloat inputText |> Result.withDefault 0.0) }, Cmd.none )
+
+                TickerSymbol ->
+                    ( { model | tickerSymbol = inputText }, Cmd.none )
 
         Tick newTime ->
-            ( { model | earnings = 0 }, getStockData model.tickerSymbol )
+            ( model, getStockData model.tickerSymbol )
 
         NoOp ->
             ( model, Cmd.none )
 
 
-calculateEarnings : String -> Model -> Float
-calculateEarnings stringPrice model =
+calculateEarnings : Model -> String
+calculateEarnings model =
     let
-        floatPrice =
-            (String.toFloat stringPrice |> Result.withDefault 0.0)
+        totalEarning =
+            (model.availableOptions * model.stockPrice)
+
+        cost =
+            (model.availableOptions * model.initialOfferingValue)
+
+        netGain =
+            totalEarning - cost
     in
-        (model.availableOptions * floatPrice) - (model.availableOptions * model.initialOfferingValue)
+        netGain
+            |> round
+            |> toString
 
 
 
@@ -84,7 +139,7 @@ calculateEarnings stringPrice model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Time.every (second * 30) Tick
+    Time.every (second * 10) Tick
 
 
 
@@ -110,4 +165,4 @@ getStockData tickerSymbol =
         request =
             Http.getString url
     in
-        Http.send NewMessage request
+        Http.send NewStockPrice request
