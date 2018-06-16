@@ -1,10 +1,11 @@
 module App exposing (..)
 
-import Html exposing (Html, div, text, program, h1, input, label)
-import Html.Attributes exposing (defaultValue, type_)
+import Html exposing (div, text, program, h1, input, label, p)
+import Html.Attributes exposing (defaultValue, type_, style)
 import Html.Events exposing (onInput)
 import Time exposing (Time, second)
 import Http
+import Css.Foreign exposing (global)
 
 
 -- MODEL
@@ -61,55 +62,77 @@ type Msg
 -- VIEW
 
 
-view : Model -> Html Msg
+view : Model -> Html.Html Msg
 view model =
     let
         earningsData =
             calculateEarnings model
     in
-        div []
-            [ h1 [] [ text ("Earnings: " ++ earningsData.netGain) ]
-            , div []
-                [ text ("Cost: " ++ earningsData.cost)
-                , text ("Total Earnings: " ++ earningsData.totalEarning)
-                , text ("Tax Rate: " ++ earningsData.taxRate)
-                , text ("Stock Price: " ++ (toString model.stockPrice))
-                , text ("Ticker: " ++ model.tickerSymbol)
-                ]
-            , label []
-                [ text "Initial Offering Value"
-                , input
-                    [ onInput (InputChange InitialOfferingValue)
-                    , type_ "number"
-                    , defaultValue (toString model.initialOfferingValue)
+        div [ style [ ( "margin", "auto" ), ( "width", "80%" ) ] ]
+            [ div [ style [ ( "padding", "1em" ), ( "text-align", "center" ) ] ]
+                [ h1
+                    [ style [ ( "font-weight", "bold" ) ] ]
+                    [ text ("Earnings: " ++ earningsData.netGain) ]
+                , div [ style [ ( "padding-bottom", "1em" ), ( "display", "flex" ), ( "justify-content", "center" ) ] ]
+                    [ div [ style [ ( "padding", "0.3em" ), ( "border", "1px solid" ), ( "margin", "0.3em" ) ] ] [ text ("Cost: " ++ earningsData.cost) ]
+                    , div [ style [ ( "padding", "0.3em" ), ( "border", "1px solid" ), ( "margin", "0.3em" ) ] ] [ text ("Total Earnings: " ++ earningsData.totalEarning) ]
+                    , div [ style [ ( "padding", "0.3em" ), ( "border", "1px solid" ), ( "margin", "0.3em" ) ] ] [ text ("Tax Rate: " ++ earningsData.taxRate) ]
+                    , div [ style [ ( "padding", "0.3em" ), ( "border", "1px solid" ), ( "margin", "0.3em" ) ] ] [ text ("Stock Price: " ++ (toString model.stockPrice)) ]
+                    , div [ style [ ( "padding", "0.3em" ), ( "border", "1px solid" ), ( "margin", "0.3em" ) ] ] [ text ("Ticker: " ++ String.toUpper (model.tickerSymbol)) ]
                     ]
-                    []
                 ]
-            , label []
-                [ text "Available Options"
-                , input
-                    [ onInput (InputChange AvailableOptions)
-                    , type_ "number"
-                    , defaultValue (toString model.availableOptions)
+            , div [ style [ ( "display", "flex" ), ( "flex-direction", "row" ), ( "flex-wrap", "wrap" ), ( "text-align", "left" ) ] ]
+                [ p [ style [ ( "width", "100%" ) ] ]
+                    [ label []
+                        [ text "Initial Offering Value"
+                        ]
+                    , input
+                        [ style [ ( "width", "100%" ), ( "border", "none" ), ( "border-bottom", "1px solid #ccc" ) ]
+                        , onInput
+                            (InputChange InitialOfferingValue)
+                        , type_ "number"
+                        , defaultValue (toString model.initialOfferingValue)
+                        ]
+                        []
                     ]
-                    []
-                ]
-            , label []
-                [ text "Ticker Symbol"
-                , input
-                    [ onInput (InputChange TickerSymbol)
-                    , defaultValue model.tickerSymbol
+                , p [ style [ ( "width", "100%" ) ] ]
+                    [ label []
+                        [ text "Available Options"
+                        ]
+                    , input
+                        [ style [ ( "width", "100%" ), ( "border", "none" ), ( "border-bottom", "1px solid #ccc" ) ]
+                        , onInput
+                            (InputChange AvailableOptions)
+                        , type_ "number"
+                        , defaultValue (toString model.availableOptions)
+                        ]
+                        []
                     ]
-                    []
-                ]
-            , label []
-                [ text "Tax Rate"
-                , input
-                    [ onInput (InputChange TaxRate)
-                    , type_ "number"
-                    , defaultValue (toString model.taxRate)
+                , p [ style [ ( "width", "100%" ) ] ]
+                    [ label []
+                        [ text "Ticker Symbol"
+                        ]
+                    , input
+                        [ style [ ( "width", "100%" ), ( "border", "none" ), ( "border-bottom", "1px solid #ccc" ) ]
+                        , onInput
+                            (InputChange TickerSymbol)
+                        , defaultValue model.tickerSymbol
+                        ]
+                        []
                     ]
-                    []
+                , p [ style [ ( "width", "100%" ) ] ]
+                    [ label []
+                        [ text "Tax Rate"
+                        ]
+                    , input
+                        [ style [ ( "width", "100%" ), ( "border", "none" ), ( "border-bottom", "1px solid #ccc" ) ]
+                        , onInput
+                            (InputChange TaxRate)
+                        , type_ "number"
+                        , defaultValue (toString model.taxRate)
+                        ]
+                        []
+                    ]
                 ]
             ]
 
@@ -178,7 +201,7 @@ calculateEarnings model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Time.every (second * 10) Tick
+    Time.every (second * 30) Tick
 
 
 
