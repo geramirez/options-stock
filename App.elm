@@ -81,7 +81,7 @@ view model =
                     , div [ style [ ( "padding", "0.3em" ), ( "border", "1px solid" ), ( "margin", "0.3em" ) ] ] [ text ("Ticker: " ++ String.toUpper (model.tickerSymbol)) ]
                     ]
                 ]
-            , div [ style [ ( "display", "flex" ), ( "flex-direction", "row" ), ( "flex-wrap", "wrap" ), ( "text-align", "left" ) ] ]
+            , div [ style [ ( "display", "flex" ), ( "flex-direction", "row" ), ( "flex-wrap", "wrap" ), ( "text-align", "left" ), ( "border", "1px solid #ccc" ), ( "padding", "1em" ) ] ]
                 [ p [ style [ ( "width", "100%" ) ] ]
                     [ label []
                         [ text "Initial Offering Value"
